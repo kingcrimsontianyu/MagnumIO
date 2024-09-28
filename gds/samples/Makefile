@@ -44,7 +44,7 @@ else
 	CUFILE_INCLUDE_PATH ?= /usr/local/cuda/targets/x86_64-linux/include/
 endif
 CXXFLAGS    := -Wall
-CXXFLAGS    += -I $(CUDA_PATH)/include/ 
+CXXFLAGS    += -I $(CUDA_PATH)/include/
 CXXFLAGS    += -I $(CUFILE_INCLUDE_PATH)
 ###########################
 # Enable the following line for code coverage
@@ -77,7 +77,7 @@ release_samples:
 
 samples = $(wildcard cufile_sample_*.cc)
 cusamples = $(wildcard cufile_sample_*.cu)
-objs = $(samples:.cc=)  $(samples:.cc=_static)
+objs = $(samples:.cc=)
 cuobjs = $(cusamples:.cu=) vectorAdd.o
 build: $(objs) $(cuobjs)
 
@@ -100,12 +100,9 @@ vectorAdd.o : vectorAdd.cu
 
 %: %.cc $(CUFILE_INCLUDE_PATH)/cufile.h vectorAdd.o
 	$(CC) $(INCLUDES) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
-%_static: %.cc $(CUFILE_INCLUDE_PATH)/cufile.h vectorAdd.o
-	$(CC)  $(INCLUDES) $(CXXFLAGS) $^ -o $@ $(LDFLAGS_STATIC)
 
 cufile_sample_024: cufile_sample_024.cu
 	$(NVCC) -I $(CUFILE_INCLUDE_PATH) $(INCLUDES) --cudadevrt static --cudart static $(CUDA_ARCH) $^ -o $@ $(CUFILE_LIB) -lcuda
-	$(NVCC) -I $(CUFILE_INCLUDE_PATH) $(INCLUDES) --cudart static $(CUDA_ARCH) $^ -o $@_static $(CUFILE_LIB_STATIC) -lcuda
 
 install:
 	cp vectorAdd.cu cufile_sample_*.cu cufile_sample_*.cc cufile_sample_*.h Makefile README $(INSTALL_GDSSAMPLES_PREFIX)/
