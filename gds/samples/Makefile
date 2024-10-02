@@ -77,8 +77,8 @@ release_samples:
 
 samples = $(wildcard cufile_sample_*.cc)
 cusamples = $(wildcard cufile_sample_*.cu)
-objs = $(samples:.cc=)
-cuobjs = $(cusamples:.cu=) vectorAdd.o
+objs = $(samples:.cc=.bin)
+cuobjs = $(cusamples:.cu=.bin) vectorAdd.o
 build: $(objs) $(cuobjs)
 
 CUDA_ARCH = -gencode=arch=compute_60,code=sm_60 \
@@ -101,7 +101,7 @@ vectorAdd.o : vectorAdd.cu
 %.bin: %.cc $(CUFILE_INCLUDE_PATH)/cufile.h vectorAdd.o
 	$(CC) $(INCLUDES) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
-cufile_sample_024: cufile_sample_024.cu
+cufile_sample_024.bin: cufile_sample_024.cu
 	$(NVCC) -I $(CUFILE_INCLUDE_PATH) $(INCLUDES) --cudadevrt static --cudart static $(CUDA_ARCH) $^ -o $@ $(CUFILE_LIB) -lcuda
 
 install:
