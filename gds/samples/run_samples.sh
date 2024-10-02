@@ -11,7 +11,7 @@ export CUFILE_ALLOW_COMPAT_MODE=false
 export CUFILE_LOGFILE_PATH=biu_cufile_log.txt
 export CUFILE_LOGGING_LEVEL=ERROR
 
-sample_dir=/mnt/profile/MagnumIO/gds/samples
+sample_dir=$(pwd)
 
 color_reset='\e[m'
 color_green='\e[1;32m'
