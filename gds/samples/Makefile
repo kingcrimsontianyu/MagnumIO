@@ -98,7 +98,7 @@ vectorAdd.o : vectorAdd.cu
 		$(CUDA_ARCH)  --ptxas-options=-v --compiler-options \
 		--compile --lib $< -o $@
 
-%: %.cc $(CUFILE_INCLUDE_PATH)/cufile.h vectorAdd.o
+%.bin: %.cc $(CUFILE_INCLUDE_PATH)/cufile.h vectorAdd.o
 	$(CC) $(INCLUDES) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
 cufile_sample_024: cufile_sample_024.cu
@@ -108,7 +108,6 @@ install:
 	cp vectorAdd.cu cufile_sample_*.cu cufile_sample_*.cc cufile_sample_*.h Makefile README $(INSTALL_GDSSAMPLES_PREFIX)/
 
 clean:
-	find . -type f -executable -delete
-	rm -f *.o cufile.log
+	rm -f *.bin *.o cufile.log *.txt
 
 .PHONY : build install clean
