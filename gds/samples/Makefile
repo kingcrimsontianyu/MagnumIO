@@ -43,7 +43,7 @@ else
 	CUFILE_PATH ?= /usr/local/cuda/targets/x86_64-linux/lib/
 	CUFILE_INCLUDE_PATH ?= /usr/local/cuda/targets/x86_64-linux/include/
 endif
-CXXFLAGS    := -Wall
+CXXFLAGS    := -Wall -g
 CXXFLAGS    += -I $(CUDA_PATH)/include/
 CXXFLAGS    += -I $(CUFILE_INCLUDE_PATH)
 ###########################

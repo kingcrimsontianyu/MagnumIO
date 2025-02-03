@@ -7,9 +7,10 @@ set -e -o pipefail
 # export LD_LIBRARY_PATH=/home/coder/.conda/envs/rapids/lib:${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
 # export LD_LIBRARY_PATH=/usr/local/cuda/targets/sbsa-linux/lib:${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
 
-export CUFILE_ALLOW_COMPAT_MODE=false
+export CUFILE_ALLOW_COMPAT_MODE=true
+export CUFILE_FORCE_COMPAT_MODE=true
 export CUFILE_LOGFILE_PATH=biu_cufile_log.txt
-export CUFILE_LOGGING_LEVEL=ERROR
+export CUFILE_LOGGING_LEVEL=TRACE
 
 sample_dir=$(pwd)
 
@@ -26,17 +27,24 @@ print_test_idx() {
 # device_id=0
 # $sample_dir/cufile_sample_biu $filepath $device_id
 
-print_test_idx
+
 filepath=foo
 device_id=0
+filepath_1=foo1
+filepath_2=foo2
+mode=1 # mode: DeviceMemory = 1, ManagedMemory = 2, HostMemory = 3
+num_batch_entries=4
+non_direct_flag=0
+# Buf Register 0 - register all buffers, 1 - unregistered buffers
+buf_register_flag=0
+
+print_test_idx
 $sample_dir/cufile_sample_001.bin $filepath $device_id
 
 print_test_idx
 $sample_dir/cufile_sample_002.bin $filepath $device_id
 
 print_test_idx
-filepath_1=foo1
-filepath_2=foo2
 $sample_dir/cufile_sample_003.bin $filepath_1 $filepath_2 $device_id
 
 print_test_idx
@@ -74,7 +82,6 @@ $sample_dir/cufile_sample_014.bin $filepath_1 $filepath_2 $device_id
 
 print_test_idx
 # mode: DeviceMemory = 1, ManagedMemory = 2, HostMemory = 3
-mode=1
 $sample_dir/cufile_sample_015.bin $filepath_1 $filepath_2 $device_id $mode
 
 print_test_idx
@@ -87,7 +94,6 @@ print_test_idx
 $sample_dir/cufile_sample_018.bin $filepath
 
 print_test_idx
-num_batch_entries=4
 $sample_dir/cufile_sample_019.bin $filepath $device_id $num_batch_entries
 
 print_test_idx
@@ -97,7 +103,6 @@ print_test_idx
 $sample_dir/cufile_sample_021.bin $filepath $device_id $num_batch_entries
 
 print_test_idx
-non_direct_flag=0
 $sample_dir/cufile_sample_022.bin $filepath $device_id $non_direct_flag
 
 print_test_idx
@@ -123,7 +128,6 @@ $sample_dir/cufile_sample_029.bin $filepath $device_id $num_batch_entries $non_d
 
 print_test_idx
 # Buf Register 0 - register all buffers, 1 - unregistered buffers
-buf_register_flag=0
 $sample_dir/cufile_sample_030.bin $filepath $device_id $num_batch_entries $buf_register_flag $non_direct_flag
 
 print_test_idx
