@@ -69,7 +69,7 @@ CC:=g++
 DOCKER_BUILD_REPO=gds_build:manylinux2014-mofed-5-1-cuda-11-1
 DOCKERFILE_BUILD_PATH=../../docker/manylinux2014-docker/Dockerfile-manylinux2014-cuda-11-1-MOFED-5-1
 # Target rules
-all: prepare build
+all: prepare build biu
 
 prepare:
 	mkdir -p $(BIN_DIR)
@@ -80,10 +80,12 @@ release_samples:
 	@echo "Release samples Built"
 
 
-samples = $(wildcard cufile_sample_*.cc)
+samples = $(wildcard cufile_sample_*.cc) biu.cc
 cusamples = $(wildcard cufile_sample_*.cu)
-objs = $(samples:.cc=.bin)
-cuobjs = $(cusamples:.cu=.bin) $(BIN_DIR)/vectorAdd.o
+objs := $(samples:.cc=.bin)
+objs := $(foreach obj_file, $(objs), $(BIN_DIR)/$(obj_file))
+cuobjs := $(cusamples:.cu=.bin) vectorAdd.o
+cuobjs := $(foreach obj_file, $(cuobjs), $(BIN_DIR)/$(obj_file))
 build: $(objs) $(cuobjs)
 
 # CUDA_ARCH = -gencode=arch=compute_60,code=sm_60 \
@@ -102,18 +104,18 @@ CUDA_ARCH = -arch=native
 $(BIN_DIR)/vectorAdd.o : vectorAdd.cu
 	$(NVCC) $(INCLUDES) --cudadevrt static --cudart static \
 		$(CUDA_ARCH)  --ptxas-options=-v --compiler-options \
-		--compile --lib $< -o $(BIN_DIR)/$@
+		--compile --lib $< -o $@
 
-%.bin: %.cc $(CUFILE_INCLUDE_PATH)/cufile.h $(BIN_DIR)/vectorAdd.o
-	$(CC) $(INCLUDES) $(CXXFLAGS) $^ -o $(BIN_DIR)/$@ $(LDFLAGS)
+$(BIN_DIR)/%.bin: %.cc $(CUFILE_INCLUDE_PATH)/cufile.h $(BIN_DIR)/vectorAdd.o
+	$(CC) $(INCLUDES) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
-cufile_sample_024.bin: cufile_sample_024.cu
-	$(NVCC) -I $(CUFILE_INCLUDE_PATH) $(INCLUDES) --cudadevrt static --cudart static $(CUDA_ARCH) $^ -o $(BIN_DIR)/$@ $(CUFILE_LIB) -lcuda
+$(BIN_DIR)/cufile_sample_024.bin: cufile_sample_024.cu
+	$(NVCC) -I $(CUFILE_INCLUDE_PATH) $(INCLUDES) --cudadevrt static --cudart static $(CUDA_ARCH) $^ -o $@ $(CUFILE_LIB) -lcuda
 
 install:
 	cp vectorAdd.cu cufile_sample_*.cu cufile_sample_*.cc cufile_sample_*.h Makefile README $(INSTALL_GDSSAMPLES_PREFIX)/
 
 clean:
-	rm -f $(BIN_DIR)/*.bin $(BIN_DIR)/*.o cufile.log *.txt
+	rm -rf $(BIN_DIR) cufile.log *.txt
 
-.PHONY : build install clean prepare
+.PHONY : build install clean prepare biu
