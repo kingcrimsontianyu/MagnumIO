@@ -61,14 +61,19 @@ CUFILE_LIB_STATIC  := -L $(CUFILE_PATH) -lcufile_static
 LDFLAGS     :=  $(CUFILE_LIB) -L $(CUDA_PATH)/lib64/stubs -lcuda $(CUDART_STATIC) -Bdynamic -lrt -ldl
 LDFLAGS_STATIC     :=  $(CUFILE_LIB_STATIC) -L $(CUDA_PATH)/lib64/stubs -lcuda $(CUDART_STATIC) -Bdynamic -lrt -ldl
 INSTALL_GDSSAMPLES_PREFIX = /usr/local/gds/samples
-NVCC          :=$(CUDA_PATH)//bin/nvcc
+NVCC          :=$(CUDA_PATH)/bin/nvcc
+BIN_DIR := bin
 
 ################################################################################
 CC:=g++
 DOCKER_BUILD_REPO=gds_build:manylinux2014-mofed-5-1-cuda-11-1
 DOCKERFILE_BUILD_PATH=../../docker/manylinux2014-docker/Dockerfile-manylinux2014-cuda-11-1-MOFED-5-1
 # Target rules
-all: build
+all: prepare build
+
+prepare:
+	mkdir -p $(BIN_DIR)
+
 release_samples:
 	docker build -t $(DOCKER_BUILD_REPO) -f $(DOCKERFILE_BUILD_PATH) ./
 	docker run -v `pwd`/../../:/nvme-direct:rw --rm -it $(DOCKER_BUILD_REPO) sh -c "cd /nvme-direct/tools/samples;$(MAKE) build"
@@ -78,36 +83,37 @@ release_samples:
 samples = $(wildcard cufile_sample_*.cc)
 cusamples = $(wildcard cufile_sample_*.cu)
 objs = $(samples:.cc=.bin)
-cuobjs = $(cusamples:.cu=.bin) vectorAdd.o
+cuobjs = $(cusamples:.cu=.bin) $(BIN_DIR)/vectorAdd.o
 build: $(objs) $(cuobjs)
 
-CUDA_ARCH = -gencode=arch=compute_60,code=sm_60 \
-            -gencode=arch=compute_61,code=sm_61 \
-            -gencode=arch=compute_61,code=sm_61 \
-            -gencode=arch=compute_61,code=sm_61 \
-            -gencode=arch=compute_62,code=sm_62 \
-            -gencode=arch=compute_70,code=sm_70 \
-            -gencode=arch=compute_72,code=sm_72 \
-            -gencode=arch=compute_75,code=sm_75 \
-            -gencode=arch=compute_80,code=sm_80 \
-            -gencode=arch=compute_86,code=sm_86 \
-            -gencode=arch=compute_80,code=compute_80
+# CUDA_ARCH = -gencode=arch=compute_60,code=sm_60 \
+#             -gencode=arch=compute_61,code=sm_61 \
+#             -gencode=arch=compute_61,code=sm_61 \
+#             -gencode=arch=compute_61,code=sm_61 \
+#             -gencode=arch=compute_62,code=sm_62 \
+#             -gencode=arch=compute_70,code=sm_70 \
+#             -gencode=arch=compute_72,code=sm_72 \
+#             -gencode=arch=compute_75,code=sm_75 \
+#             -gencode=arch=compute_80,code=sm_80 \
+#             -gencode=arch=compute_86,code=sm_86 \
+#             -gencode=arch=compute_80,code=compute_80
+CUDA_ARCH = -arch=native
 
-vectorAdd.o : vectorAdd.cu
+$(BIN_DIR)/vectorAdd.o : vectorAdd.cu
 	$(NVCC) $(INCLUDES) --cudadevrt static --cudart static \
 		$(CUDA_ARCH)  --ptxas-options=-v --compiler-options \
-		--compile --lib $< -o $@
+		--compile --lib $< -o $(BIN_DIR)/$@
 
-%.bin: %.cc $(CUFILE_INCLUDE_PATH)/cufile.h vectorAdd.o
-	$(CC) $(INCLUDES) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
+%.bin: %.cc $(CUFILE_INCLUDE_PATH)/cufile.h $(BIN_DIR)/vectorAdd.o
+	$(CC) $(INCLUDES) $(CXXFLAGS) $^ -o $(BIN_DIR)/$@ $(LDFLAGS)
 
 cufile_sample_024.bin: cufile_sample_024.cu
-	$(NVCC) -I $(CUFILE_INCLUDE_PATH) $(INCLUDES) --cudadevrt static --cudart static $(CUDA_ARCH) $^ -o $@ $(CUFILE_LIB) -lcuda
+	$(NVCC) -I $(CUFILE_INCLUDE_PATH) $(INCLUDES) --cudadevrt static --cudart static $(CUDA_ARCH) $^ -o $(BIN_DIR)/$@ $(CUFILE_LIB) -lcuda
 
 install:
 	cp vectorAdd.cu cufile_sample_*.cu cufile_sample_*.cc cufile_sample_*.h Makefile README $(INSTALL_GDSSAMPLES_PREFIX)/
 
 clean:
-	rm -f *.bin *.o cufile.log *.txt
+	rm -f $(BIN_DIR)/*.bin $(BIN_DIR)/*.o cufile.log *.txt
 
-.PHONY : build install clean
+.PHONY : build install clean prepare
