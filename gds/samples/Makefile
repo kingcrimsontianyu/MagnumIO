@@ -74,6 +74,8 @@ all: prepare build biu
 prepare:
 	mkdir -p $(BIN_DIR)
 
+biu: $(BIN_DIR)/biu.bin
+
 release_samples:
 	docker build -t $(DOCKER_BUILD_REPO) -f $(DOCKERFILE_BUILD_PATH) ./
 	docker run -v `pwd`/../../:/nvme-direct:rw --rm -it $(DOCKER_BUILD_REPO) sh -c "cd /nvme-direct/tools/samples;$(MAKE) build"
